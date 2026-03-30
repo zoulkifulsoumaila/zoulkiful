@@ -71,7 +71,6 @@ export async function POST(req: NextRequest) {
         phone: customerPhone,
       },
       return_url: `${appUrl}/success?ref=${reference}`,
-      cancel_url: `${appUrl}/offers?cancelled=1`,
       metadata: {
         transactionId: transaction.id,
         reference,
