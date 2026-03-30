@@ -1,0 +1,85 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  phone        String?
+  country      String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@index([email])
+}
+
+model Product {
+  id           String        @id @default(cuid())
+  name         String
+  slug         String        @unique
+  description  String
+  priceFcfa    Int           // price in FCFA (West African CFA franc)
+  priceEur     Float?        // equivalent in EUR for display
+  tier         ProductTier
+  features     String[]
+  notionUrl    String?       // private content URL
+  isActive     Boolean       @default(true)
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Transaction {
+  id              String            @id @default(cuid())
+  reference       String            @unique  // Moneroo transaction reference
+  monerooId       String?           @unique  // Moneroo internal ID
+  userId          String
+  productId       String
+  amountFcfa      Int               // amount charged in FCFA
+  currency        String            @default("XOF")
+  status          TransactionStatus @default(PENDING)
+  paymentMethod   String?
+  customerEmail   String
+  customerName    String?
+  customerPhone   String?
+  emailSent       Boolean           @default(false)
+  receiptUrl      String?
+  monerooPayload  Json?             // raw webhook payload for audit
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  paidAt          DateTime?
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([reference])
+  @@index([userId])
+  @@index([status])
+}
+
+enum ProductTier {
+  STARTER
+  GROWTH
+  PREMIUM
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
+  REFUNDED
+}
